@@ -1,6 +1,7 @@
 package com.mortgage.plan.common.service;
 
 import com.mortgage.plan.common.model.CustomerMortgageInfo;
+import com.mortgage.plan.common.model.MortgageInfoResult;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.stereotype.Service;
@@ -9,16 +10,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class MortgagePlanService {
 
-    public List<CustomerMortgageInfo> getCustomerMortgageInfo(InputStream stream) throws IOException
-    {
+    public MortgageInfoResult getCustomerMortgageInfo(InputStream stream) throws IOException {
 
-        List<CustomerMortgageInfo> models = new ArrayList<>();
+        MortgageInfoResult result = new MortgageInfoResult();
 
         try (CSVReader reader = new CSVReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
 
@@ -31,22 +29,32 @@ public class MortgagePlanService {
             while ((nextLine = reader.readNext()) != null) {
                 line++;
                 if (nextLine.length == 4) {
-                    CustomerMortgageInfo model = new CustomerMortgageInfo(line, nextLine[0],
-                            Double.parseDouble(nextLine[1]), Double.parseDouble(nextLine[2]),
-                            Integer.parseInt(nextLine[3]));
-                    models.add(model);
+                    try {
+                        CustomerMortgageInfo model = new CustomerMortgageInfo(line, nextLine[0],
+                                Double.parseDouble(nextLine[1]), Double.parseDouble(nextLine[2]),
+                                Integer.parseInt(nextLine[3]));
 
-                    Double monthlyPayment = calculateMonthlyPayment(model.getTotalLoan(), model.getInterest(),
-                            model.getYears());
-                    model.setMonthlyPayment(monthlyPayment);
+                        Double monthlyPayment = calculateMonthlyPayment(model.getTotalLoan(), model.getInterest(),
+                                model.getYears());
+                        model.setMonthlyPayment(monthlyPayment);
+
+                        result.setCustomerMortgageInfo(model);
+                    } catch (NumberFormatException e) {
+                        result.setError(e.getMessage(), line);
+                    }
+                } else {
+                    if (nextLine.length > 0 && !nextLine[0].isEmpty()) {
+                        result.setError("Invalid number of columns", line);
+                    }
                 }
             }
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);
         }
 
-        return models;
+        return result;
     }
+
 
     public double calculateMonthlyPayment(double totalLoan, double interest, int years) {
 

@@ -1,6 +1,12 @@
 package com.mortgage.plan.common.service;
 
+import com.mortgage.plan.common.model.MortgageInfoResult;
 import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -83,5 +89,52 @@ class MortgagePlanServiceTest {
     void roundToTwoDecimalsToDown() {
         double pow = mortgagePlanService.roundToTwoDecimals(1.3446);
         assertEquals(1.34, pow);
+    }
+
+    @Test
+    void getCustomerMortgageInfoValidInput() throws IOException {
+        String input = "Name,TotalLoan,Interest,Years\n" +
+                "John Doe,100000,5,30\n" +
+                "Jane Doe,150000,4.5,25\n";
+        InputStream stream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+
+        MortgageInfoResult result = mortgagePlanService.getCustomerMortgageInfo(stream);
+
+        // Assert the result based on your expectations
+        assertNotNull(result);
+        assertEquals(0 , result.getErrors().size());
+        assertEquals(2, result.getCustomersMortgageInfo().size());
+    }
+
+    @Test
+    void getCustomerMortgageInfoInvalidNumberFormat() throws IOException, IOException {
+        String input = "Name,TotalLoan,Interest,Years\n" +
+                "John Doe,100000,invalid,30\n";
+        InputStream stream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+
+        MortgageInfoResult result = mortgagePlanService.getCustomerMortgageInfo(stream);
+
+        System.out.println(result.getErrors());
+
+        // Assert the error messages based on your expectations
+        assertNotNull(result.getCustomersMortgageInfo());
+        assertNotNull(result.getErrors());
+        assertTrue(result.getErrors().contains("Line 1: For input string: \"invalid\""));
+    }
+
+    @Test
+    void getCustomerMortgageInfoInvalidNumberOfColumns() throws IOException, IOException {
+        String input = "Name,TotalLoan,Interest,Years\n" +
+                "John Doe,100000,30\n";
+        InputStream stream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+
+        MortgageInfoResult result = mortgagePlanService.getCustomerMortgageInfo(stream);
+
+        System.out.println(result.getErrors());
+
+        // Assert the error messages based on your expectations
+        assertNotNull(result.getCustomersMortgageInfo());
+        assertNotNull(result.getErrors());
+        assertTrue(result.getErrors().contains("Line 1: Invalid number of columns"));
     }
 }
