@@ -48,9 +48,32 @@ public class MortgagePlanService {
         return models;
     }
 
-    public Double calculateMonthlyPayment(Double totalLoan, Double interest, Integer years) {
-        Double monthlyInterest = interest / 100 / 12;
-        Integer months = years * 12;
-        return totalLoan * (monthlyInterest * Math.pow(1 + monthlyInterest, months)) / (Math.pow(1 + monthlyInterest, months) - 1);
+    public double calculateMonthlyPayment(double totalLoan, double interest, int years) {
+
+        double monthlyInterest = interest / 100 / 12;
+
+        int months = years * 12;
+
+        double monthlyPayment =  totalLoan * (monthlyInterest * pow(1 + monthlyInterest, months)) / (pow(1 + monthlyInterest, months) - 1);
+
+        monthlyPayment = roundToTwoDecimals(monthlyPayment);
+
+        return monthlyPayment;
+    }
+
+    public double roundToTwoDecimals(Double value) {
+        return (double) ((long) (value * 100 + 0.5)) / 100;
+    }
+
+    public double pow(Double base, Integer exponent) {
+        if (exponent == 0) {
+            return 1.0;
+        }
+
+        Double result = base;
+        for (int i = 1; i < exponent; i++) {
+            result *= base;
+        }
+        return result;
     }
 }
