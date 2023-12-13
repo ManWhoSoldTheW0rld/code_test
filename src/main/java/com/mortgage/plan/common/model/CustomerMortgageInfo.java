@@ -5,20 +5,20 @@ import lombok.Data;
 @Data
 public class CustomerMortgageInfo {
 
-        private Integer line;
-        private String customer;
-        private Double totalLoan;
-        private Double interest;
-        private Integer years;
-        private Double monthlyPayment;
+    private Integer line;
+    private String customer;
+    private Double totalLoan;
+    private Double interest;
+    private Integer years;
+    private Double monthlyPayment;
 
-        public CustomerMortgageInfo(Integer line, String customer, Double totalLoan, Double interest, Integer years) {
-            this.line = line;
-            this.customer = customer;
-            this.totalLoan = totalLoan;
-            this.interest = interest;
-            this.years = years;
-        }
+    public CustomerMortgageInfo(Integer line, String customer, Double totalLoan, Double interest, Integer years) {
+        this.line = line;
+        this.customer = customer;
+        this.totalLoan = totalLoan;
+        this.interest = interest;
+        this.years = years;
+    }
 
     public String toString() {
         return "****************************************************************************************************\n"
