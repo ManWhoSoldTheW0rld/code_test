@@ -1,26 +1,53 @@
 package com.mortgage.plan.web.controller;
 
-import com.mortgage.plan.common.model.MortgageInfoResult;
-import com.mortgage.plan.common.service.MortgagePlanService;
+import com.mortgage.plan.web.service.MortgagePlanDataManager;
+import com.mortgage.plan.common.dto.MortgagePlanRequest;
+import com.mortgage.plan.common.dto.MortgagePlanResponse;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
+import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@RequestMapping("/mortgage/plan")
 public class MortgageController {
 
-    private final MortgagePlanService mortgagePlanService;
+    private final MortgagePlanDataManager dataManager;
 
-    public MortgageController(MortgagePlanService mortgagePlanService) {
-        this.mortgagePlanService = mortgagePlanService;
+    @Autowired
+    public MortgageController(MortgagePlanDataManager dataManager) {
+        this.dataManager = dataManager;
     }
 
-    @GetMapping("/plan")
-    public MortgageInfoResult getPlans(@RequestParam("file") MultipartFile file) throws IOException {
-        InputStream stream = file.getInputStream();
-        return mortgagePlanService.getCustomerMortgageInfo(stream);
+    @GetMapping
+    public ResponseEntity<List<MortgagePlanResponse>> getPlans() {
+
+        List<MortgagePlanResponse> tournaments = dataManager.getMortgagePlanList();
+        return ResponseEntity.ok(tournaments);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MortgagePlanResponse> getPlan(@PathVariable Integer id) {
+
+        MortgagePlanResponse plan = dataManager.getMortgagePlan(id);
+        return ResponseEntity.ok(plan);
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> addPlan(@Valid @RequestBody MortgagePlanRequest request,
+                                       UriComponentsBuilder ucb) {
+
+        Integer planId = dataManager.addMortgagePlan(request);
+
+        URI locationOfNewTournament = ucb
+                .path("/tournament/{id}")
+                .buildAndExpand(planId)
+                .toUri();
+
+        return ResponseEntity.created(locationOfNewTournament).build();
     }
 }
