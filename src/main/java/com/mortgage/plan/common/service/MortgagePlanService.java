@@ -1,11 +1,12 @@
 package com.mortgage.plan.common.service;
 
-import com.mortgage.plan.common.model.CustomerMortgageInfo;
-import com.mortgage.plan.common.model.MortgageInfoResult;
+import com.mortgage.plan.common.dto.MortgagePlanResponse;
+import com.mortgage.plan.common.dto.MortgageInfoResult;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,11 +15,20 @@ import java.nio.charset.StandardCharsets;
 @Service
 public class MortgagePlanService {
 
-    public MortgageInfoResult getCustomerMortgageInfo(InputStream stream) throws IOException {
+    public MortgageInfoResult getCustomerMortgageInfoFromCsvFile(String filePath) throws IOException {
+
+        if (!filePath.toLowerCase().endsWith(".csv") && !filePath.toLowerCase().endsWith(".txt")) {
+            throw new IllegalArgumentException("Invalid file type");
+        }
+        InputStream inputStream = new FileInputStream(filePath);
+        return getCustomerMortgageInfo(inputStream);
+    }
+
+    public MortgageInfoResult getCustomerMortgageInfo(InputStream inputStream) throws IOException {
 
         MortgageInfoResult result = new MortgageInfoResult();
 
-        try (CSVReader reader = new CSVReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
             String[] nextLine;
             int line = 0;
@@ -30,13 +40,8 @@ public class MortgagePlanService {
                 line++;
                 if (nextLine.length == 4) {
                     try {
-                        CustomerMortgageInfo model = new CustomerMortgageInfo(line, nextLine[0],
-                                Double.parseDouble(nextLine[1]), Double.parseDouble(nextLine[2]),
-                                Integer.parseInt(nextLine[3]));
-
-                        Double monthlyPayment = calculateMonthlyPayment(model.getTotalLoan(), model.getInterest(),
-                                model.getYears());
-                        model.setMonthlyPayment(monthlyPayment);
+                        MortgagePlanResponse model = createCustomerMortgageInfo(line, nextLine[0], Double.parseDouble(nextLine[1]),
+                                Double.parseDouble(nextLine[2]), Integer.parseInt(nextLine[3]));
 
                         result.setCustomerMortgageInfo(model);
                     } catch (NumberFormatException e) {
@@ -48,6 +53,8 @@ public class MortgagePlanService {
                     }
                 }
             }
+
+            inputStream.close();
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);
         }
@@ -55,6 +62,12 @@ public class MortgagePlanService {
         return result;
     }
 
+    public MortgagePlanResponse createCustomerMortgageInfo(int id, String name, double totalLoan, double interest, int years) {
+        MortgagePlanResponse model = new MortgagePlanResponse(id, name, totalLoan, interest, years);
+        Double monthlyPayment = calculateMonthlyPayment(model.getTotalLoan(), model.getInterest(), model.getYears());
+        model.setMonthlyPayment(monthlyPayment);
+        return model;
+    }
 
     public double calculateMonthlyPayment(double totalLoan, double interest, int years) {
 

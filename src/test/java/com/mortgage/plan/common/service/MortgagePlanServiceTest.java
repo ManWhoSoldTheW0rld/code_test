@@ -1,6 +1,6 @@
 package com.mortgage.plan.common.service;
 
-import com.mortgage.plan.common.model.MortgageInfoResult;
+import com.mortgage.plan.common.dto.MortgageInfoResult;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
