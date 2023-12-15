@@ -1,9 +1,13 @@
 package com.mortgage.plan.common.service;
 
+import com.mortgage.plan.common.dto.MortgagePlanRequest;
 import com.mortgage.plan.common.dto.MortgagePlanResponse;
 import com.mortgage.plan.common.dto.MortgageInfoResult;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -11,9 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 @Service
 public class MortgagePlanService {
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     public MortgageInfoResult getCustomerMortgageInfoFromCsvFile(String filePath) throws IOException {
 
@@ -40,8 +46,20 @@ public class MortgagePlanService {
                 line++;
                 if (nextLine.length == 4) {
                     try {
-                        MortgagePlanResponse model = createCustomerMortgageInfo(line, nextLine[0], Double.parseDouble(nextLine[1]),
-                                Double.parseDouble(nextLine[2]), Integer.parseInt(nextLine[3]));
+
+                        MortgagePlanRequest request = new MortgagePlanRequest(nextLine[0],
+                                Double.parseDouble(nextLine[1]), Double.parseDouble(nextLine[2]),
+                                Integer.parseInt(nextLine[3]));
+
+                        Set<ConstraintViolation<MortgagePlanRequest>> violations = validator.validate(request);
+                        if (!violations.isEmpty()) {
+                            for (ConstraintViolation<MortgagePlanRequest> violation : violations) {
+                                result.setError(violation.getMessage(), line);
+                            }
+                            continue;
+                        }
+
+                        MortgagePlanResponse model = createCustomerMortgageInfo(line, request);
 
                         result.setCustomerMortgageInfo(model);
                     } catch (NumberFormatException e) {
@@ -62,8 +80,10 @@ public class MortgagePlanService {
         return result;
     }
 
-    public MortgagePlanResponse createCustomerMortgageInfo(int id, String name, double totalLoan, double interest, int years) {
-        MortgagePlanResponse model = new MortgagePlanResponse(id, name, totalLoan, interest, years);
+    public MortgagePlanResponse createCustomerMortgageInfo(int id, MortgagePlanRequest request) {
+        MortgagePlanResponse model = new MortgagePlanResponse(id, request.getCustomer(),
+                request.getTotalLoan(), request.getInterest(), request.getYears());
+
         Double monthlyPayment = calculateMonthlyPayment(model.getTotalLoan(), model.getInterest(), model.getYears());
         model.setMonthlyPayment(monthlyPayment);
         return model;

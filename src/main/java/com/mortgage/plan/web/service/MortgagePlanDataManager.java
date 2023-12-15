@@ -43,10 +43,12 @@ public class MortgagePlanDataManager {
         List<MortgagePlan> plans = mortgagePlanRepository.findAll();
         return plans.stream()
                 .map(plan -> MortgagePlanResponse.builder()
+                        .id(plan.getId())
                         .customer(plan.getCustomer())
                         .totalLoan(plan.getTotalLoan())
                         .interest(plan.getInterest())
                         .years(plan.getYears())
+                        .monthlyPayment(plan.getMonthlyPayment())
                         .build())
                 .toList();
     }
@@ -55,10 +57,12 @@ public class MortgagePlanDataManager {
         //todo: handle exception
         MortgagePlan plan = mortgagePlanRepository.findById(id).orElseThrow();
         return MortgagePlanResponse.builder()
+                .id(plan.getId())
                 .customer(plan.getCustomer())
                 .totalLoan(plan.getTotalLoan())
                 .interest(plan.getInterest())
                 .years(plan.getYears())
+                .monthlyPayment(plan.getMonthlyPayment())
                 .build();
     }
 }
