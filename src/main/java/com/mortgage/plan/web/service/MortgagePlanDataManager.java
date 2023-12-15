@@ -1,5 +1,6 @@
 package com.mortgage.plan.web.service;
 
+import com.mortgage.plan.web.exception.ResourceNotFoundException;
 import com.mortgage.plan.web.model.MortgagePlan;
 import com.mortgage.plan.web.repository.MortgagePlanRepository;
 import com.mortgage.plan.common.dto.MortgagePlanRequest;
@@ -54,8 +55,10 @@ public class MortgagePlanDataManager {
     }
 
     public MortgagePlanResponse getMortgagePlan(Integer id) {
-        //todo: handle exception
-        MortgagePlan plan = mortgagePlanRepository.findById(id).orElseThrow();
+
+        MortgagePlan plan = mortgagePlanRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("Plan not found with ID: " + id)
+        );
         return MortgagePlanResponse.builder()
                 .id(plan.getId())
                 .customer(plan.getCustomer())
